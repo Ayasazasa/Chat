@@ -89,7 +89,6 @@ public class Client {
     private Login login = null;
 
     private MessageThread messageThread;// 负责接收消息的线程
-    //private Map<String, User> onLineUsers = new HashMap<String, User>();// 所有在线用户
 
     public static void main(String args[]) throws ClassNotFoundException {
         new Client();
@@ -114,7 +113,6 @@ public class Client {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //这里必须等待一些时间，不然会出错，不知道为什么
         }
 
         //客户机界面
@@ -214,7 +212,6 @@ public class Client {
                         boolean flag = connectServer(port_int,hostip,name);
                         if(!flag)
                             throw new Exception("与服务器连接失败!");
-                        JOptionPane.showMessageDialog(frame,"成功连接!");
                         stop.setEnabled(true);
                         start.setEnabled(false);
                         port.setEnabled(false);
@@ -292,7 +289,6 @@ public class Client {
             isConnected = true;
             messageThread = new MessageThread(reader,textArea);
             messageThread.start();
-            Thread.sleep(100);
             return isConnected;
         } catch (Exception e){
             textArea.append("与端口号为：" + port + " IP地址为：" + hostip+ " 的服务器连接失败!" + "\n");
@@ -358,7 +354,23 @@ public class Client {
                     news = in.readLine();
                     StringTokenizer str = new StringTokenizer(news,"/@");
                     String cmd = str.nextToken();  //命令
-                    if(cmd.equals("CLOSE"))
+                    if(cmd.equals("Online"))
+                    {
+                        JOptionPane.showMessageDialog(frame,"该用户已在线，不能重复连接！");
+                        try {
+                            boolean flag = closeCon();  // 断开连接
+                            if(!flag)
+                                throw new Exception("断开连接发生异常！");
+                            stop.setEnabled(false);
+                            start.setEnabled(true);
+                            port.setEnabled(true);
+                            hostIp.setEnabled(true);
+                            return;
+                        } catch (Exception exc){
+                            JOptionPane.showMessageDialog(frame,exc.getMessage());
+                        }
+                    }
+                    else if(cmd.equals("CLOSE"))
                     {
                         textArea.append("服务器已关闭!\n");
                         try {

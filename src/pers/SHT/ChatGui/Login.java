@@ -201,15 +201,22 @@ public class Login extends JFrame {
         button4.addActionListener(new ActionListener() {  //register界面按register
             @Override
             public void actionPerformed(ActionEvent e) {
-                mysqlConnect_register();
-                JOptionPane.showMessageDialog(null, "mysqlConnect_register！之前");
+                try {
+                    mysqlConnect_register();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 
         passwordField3.addActionListener(new ActionListener() {  //register界面密码框按回车
             @Override
             public void actionPerformed(ActionEvent e) {
-                mysqlConnect_register();
+                try {
+                    mysqlConnect_register();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
             }
         });
     }
@@ -244,6 +251,7 @@ public class Login extends JFrame {
                 }
                 else
                 {
+
                     //JOptionPane.showMessageDialog(login, "登录成功！");
                     login.setVisible(false);
                     use_connection = true;
@@ -252,8 +260,7 @@ public class Login extends JFrame {
         }
     }
 
-    private void mysqlConnect_register()
-    {
+    private void mysqlConnect_register() throws SQLException {
         String user = textField2.getText();
         String passwd1 = String.valueOf(passwordField2.getPassword());
         String passwd2 = String.valueOf(passwordField3.getPassword());
@@ -273,15 +280,25 @@ public class Login extends JFrame {
             }
             else
             {
-                sql = "insert into user values('"+user+"','"+passwd1+"',0);";
-                if(!Conn.insertSQL(sql,register))
+                sql = "select * from user where name='"+user+"';";
+                rs = Conn.selectSQL(sql,register);
+                if(!rs.next())
                 {
-                    JOptionPane.showMessageDialog(register, "注册失败！");
+                    sql = "insert into user values('"+user+"','"+passwd1+"');";
+                    if(!Conn.insertSQL(sql,register))
+                    {
+                        JOptionPane.showMessageDialog(register, "注册失败！");
+                    }
+                    else
+                    {
+                        JOptionPane.showMessageDialog(register, "注册成功！");
+                        register.setVisible(false);
+                    }
                 }
                 else
                 {
-                    JOptionPane.showMessageDialog(register, "注册成功！");
-                    register.setVisible(false);
+                    JOptionPane.showMessageDialog(register, "该用户已存在！");
+                    textField2.setText("");
                 }
             }
         }

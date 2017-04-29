@@ -35,7 +35,6 @@ public class Conn {
     public static boolean insertSQL(String sql,JFrame jFrame){       //插入数据
         try{
             stmt.execute(sql);
-            JOptionPane.showMessageDialog(jFrame, "插入数据成功！");
             return true;
         }catch (Exception e){
             JOptionPane.showMessageDialog(jFrame, "插入数据失败！");
@@ -47,7 +46,6 @@ public class Conn {
     public static boolean deleteSQL(String sql,JFrame jFrame){       //删除数据
         try{
             stmt.executeUpdate(sql);
-            JOptionPane.showMessageDialog(jFrame, "删除数据成功！");
             return true;
         }catch(Exception e){
             JOptionPane.showMessageDialog(jFrame, "删除数据时出错！");
@@ -59,7 +57,6 @@ public class Conn {
     public static boolean updateSQL(String sql,JFrame jFrame){       //更新数据
         try{
             stmt.executeUpdate(sql);
-            JOptionPane.showMessageDialog(jFrame, "修改数据成功！");
             return true;
         }catch(Exception e){
             JOptionPane.showMessageDialog(jFrame, "修改数据时出错！");

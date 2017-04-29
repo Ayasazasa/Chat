@@ -58,12 +58,10 @@ public class Server {
         new Server();
     }
 
-    public Server() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
+
+    private Server() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
 
         frame = new JFrame("服务器");
-        // 更改JFrame的图标：
-        //frame.setIconImage(Toolkit.getDefaultToolkit().createImage(Client.class.getResource("qq.png")));
-        //frame.setIconImage(Toolkit.getDefaultToolkit().createImage(Server.class.getResource("qq.png")));
         contentArea = new JTextArea();
         contentArea.setEditable(false);
         message = new JTextField();
@@ -229,6 +227,7 @@ public class Server {
             serverThread.start();
             isStart = true;
         } catch (BindException e){
+            e.printStackTrace();
             isStart = false;
             throw new BindException("端口号已被占用，请换一个！");
         } catch (Exception exc){
@@ -304,12 +303,42 @@ public class Server {
                     }
                     else
                     {
-                        ClientThread client = new ClientThread(socket);
+                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        PrintWriter out = new PrintWriter(socket.getOutputStream());
+                        // 接收客户端的用户信息
+                        String news = in.readLine();
+                        StringTokenizer str = new StringTokenizer(news,"@");
+                        String name = str.nextToken();
+                        String ip = str.nextToken();
+                        //检查该用户是否已经在线
+                        if(clients.size() > 0)
+                        {
+                            boolean flag=false;
+                            for(int i=0;i<clients.size();i++)
+                            {
+                                if(clients.get(i).get_name().equals(name))
+                                {
+                                    //返回已经在线信息
+                                    out.println("Online");
+                                    out.flush();
+                                    //释放资源
+                                    in.close();
+                                    out.close();
+                                    socket.close();
+                                    //用户在线
+                                    flag = true;
+                                }
+                                if(flag) break;
+                            }
+                            if(flag) continue;
+                        }
+                        //用户不在线，开启线程
+                        ClientThread client = new ClientThread(socket,in,out,name,ip);
                         client.start();
-                        listModel.addElement(client.get_name());// 更新在线列表
-                        contentArea.append(client.get_name() + client.getIp() + "上线!\n");
+                        listModel.addElement(name);// 更新在线列表
+                        contentArea.append(name + ip + "上线!\n");
                     }
-                } catch (IOException exc){
+                } catch (Exception exc){
                     exc.printStackTrace();
                 }
             }
@@ -336,39 +365,30 @@ public class Server {
             return ip;
         }
 
-        private ClientThread(Socket test_socket){
-            try {
-                socket = test_socket;
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream());
-                // 接收客户端的用户信息
-                String news = in.readLine();
-                StringTokenizer str = new StringTokenizer(news,"@");
-                name = str.nextToken();
-                ip = str.nextToken();
-                // 反馈连接成功信息
-                out.println(name + ip + "与服务器连接成功!");
+        private ClientThread(Socket test_socket,BufferedReader test_in,PrintWriter test_out,String test_name,String test_ip){
+            socket = test_socket;
+            in = test_in;
+            out = test_out;
+            name = test_name;
+            ip = test_ip;
+            // 反馈连接成功信息
+            out.println(name + ip + "与服务器连接成功!");
+            out.flush();
+            // 反馈当前在线用户信息
+            if (clients.size() > 0)
+            {
+                String temp = "";
+                for (int i=0;i<clients.size();i++)
+                    temp += clients.get(i).get_name() + "@";
+                out.println("USERLIST@" + clients.size() + "@" + temp);
                 out.flush();
-                // 反馈当前在线用户信息
-                if (clients.size() > 0)
-                {
-                    System.out.println("USERLIST");
-                    String temp = "";
-                    for (int i=0;i<clients.size();i++)
-                        temp += clients.get(i).get_name() + "@";
-                    System.out.println(temp);
-                    out.println("USERLIST@" + clients.size() + "@" + temp);
-                    out.flush();
-                }
-                // 向所有在线用户发送该用户上线命令
-                clients.add(this);
-                for(int i=0;i<clients.size();i++)
-                {
-                    clients.get(i).getWriter().println("ADD@" + name);
-                    clients.get(i).getWriter().flush();
-                }
-            } catch (IOException exc){
-                exc.printStackTrace();
+            }
+            // 向所有在线用户发送该用户上线命令
+            clients.add(this);
+            for(int i=0;i<clients.size();i++)
+            {
+                clients.get(i).getWriter().println("ADD@" + name);
+                clients.get(i).getWriter().flush();
             }
         }
 
